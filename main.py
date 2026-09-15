@@ -7,8 +7,6 @@ db_user= 'admin'
 db_pass = '12345'
 db_name ='my_database'
 
-conn=psycopg.connect(dbname=db_name, host=db_host, user=db_user, password=db_pass,port=db_port)
-cursor=conn.cursor(row_factory=dict_row)
 
 class Student:
     id=0
@@ -17,17 +15,22 @@ class Student:
     patr='Не указано'
     group_id=0
     group_name = 'Не указано'
+    conn=None
+
+    def __init__(self, conn):
+        self.conn=conn
 
     def get(self, student_id):
         sql='SELECT s.id, s.name, s.surname, s.patr, g.id AS group_id, g.title FROM students AS s JOIN groups AS g ON s.group_id = g.id WHERE s.id = %s'
-        cursor.execute(sql, (student_id,))
-        student = cursor.fetchone()
-        self.id = int(student['id'])
-        self.name = student['name']
-        self.surname =student['surname']
-        self.patr =student['patr']
-        self.group_id =student['group_id']
-        self.group_name =student['title']
+        with self.conn.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(sql, (student_id,))
+            student = cursor.fetchone()
+            self.id = int(student['id'])
+            self.name = student['name']
+            self.surname =student['surname']
+            self.patr =student['patr']
+            self.group_id =student['group_id']
+            self.group_name =student['title']
 
     def create(self):
         self.id = int(input('Введите id: '))
@@ -36,8 +39,9 @@ class Student:
         self.patr =input('Введите отчество: ')
         self.group_id =int(input('Введите id группы: ')  )
         sql = 'INSERT INTO students (id,name,surname,patr,group_id) VALUES (%s, %s, %s, %s, %s)' 
-        cursor.execute(sql, (self.id, self.name, self.surname,self.patr,self.group_id)) 
-        conn.commit()      
+        with self.conn.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(sql, (self.id, self.name, self.surname,self.patr,self.group_id)) 
+    
 
     def edit(self,student_id):
         self.id = student_id
@@ -46,13 +50,14 @@ class Student:
         self.patr =input('Введите новое отчество: ')
         self.group_id =int(input('Введите новый id группы: ')  )
         sql = 'UPDATE students SET name=%s,surname=%s, patr=%s,group_id=%s WHERE id=%s'
-        cursor.execute(sql, ( self.name, self.surname,  self.patr,self.group_id,self.id)) 
-        conn.commit() 
+        with self.conn.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(sql, ( self.name, self.surname,  self.patr,self.group_id,self.id)) 
+
 
     def delete(self,student_id):
         sql = 'DELETE FROM students AS s WHERE s.id = %s' 
-        cursor.execute(sql, ( student_id,)) 
-        conn.commit() 
+        with self.conn.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(sql, ( student_id,)) 
 
     def print(self):
         print(f"| {self.id} | {self.surname} | {self.name} | {self.group_name} |")
@@ -103,6 +108,8 @@ def delete_student(student_id):
 
     conn.commit() 
 
+connection = psycopg.connect(dbname=db, host=db_host, user=db_user, password=db_pass,port=db_port)
+
 print('1 - информация о студенте') 
 print('2 - добавить студента') 
 print('3 - редактировать студента') 
@@ -110,7 +117,7 @@ print('4 - отчислить студента')
 action = int(input('Введите действие: ')) 
 if action == 1: 
     id=int(input('Введите id: '))
-    student =Student()
+    student =Student(connection)
     student.get(id)
     student.print() 
 elif action == 2: 
@@ -127,7 +134,5 @@ elif action == 4:
 else: 
     print('Неверное действие')
 
-cursor.close()
-conn.close()
 
 
