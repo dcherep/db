@@ -1,5 +1,5 @@
-import psycopg2
-import psycopg2.extras
+import psycopg
+from psycopg.rows import dict_row
 
 db_host='217.71.129.139'
 db_port = 6075
@@ -7,8 +7,8 @@ db_user= 'admin'
 db_pass = '12345'
 db_name ='my_database'
 
-conn=psycopg2.connect(dbname=db_name, host=db_host, user=db_user, password=db_pass,port=db_port)
-cursor=conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+conn=psycopg.connect(dbname=db_name, host=db_host, user=db_user, password=db_pass,port=db_port)
+cursor=conn.cursor(row_factory=dict_row)
 
 class Student:
     id=0
